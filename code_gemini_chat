@@ -1,0 +1,148 @@
+# Gemini
+# to identify the distribution of your data, you can use a combination of statistical tests, visualizations, and domain knowledge. Here's a Python code snippet that incorporates some of these methods:
+# This code first visualizes the distribution using a histogram. Then, it performs statistical tests for various distributions. The p-value of each test indicates the likelihood that the data follows that distribution. If the p-value is greater than 0.05, it suggests that the data is likely from that distribution.
+
+import pandas as pd
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+
+# Load your data
+data = pd.read_csv("your_data.csv")
+
+# Select the column you want to analyze
+column_name = "your_column"
+
+# Visualize the distribution
+plt.hist(data[column_name], bins=30)
+plt.xlabel("Value")
+plt.ylabel("Frequency")
+plt.title("Distribution of " + column_name)
+plt.show()
+
+# Perform statistical tests
+normality_test = stats.shapiro(data[column_name])
+poisson_test = stats.poisson.test(data[column_name])
+geometric_test = stats.geom_test(data[column_name])
+binomial_test = stats.binom_test(data[column_name])
+negative_binomial_test = stats.nbinom_test(data[column_name])
+weibull_test = stats.weibull_m_test(data[column_name])
+gamma_test = stats.gamma_test(data[column_name])
+lognormal_test = stats.lognorm_test(data[column_name])
+
+# Print results
+print("Normality Test (Shapiro-Wilk):", normality_test)
+print("Poisson Test:", poisson_test)
+print("Geometric Test:", geometric_test)
+print("Binomial Test:", binomial_test)
+print("Negative Binomial Test:", negative_binomial_test)
+print("Weibull Test:", weibull_test)
+print("Gamma Test:", gamma_test)
+print("Lognormal Test:", lognormal_test)
+
+# Determine distribution based on statistics and visualization
+if normality_test.pvalue > 0.05:
+    print("Distribution is likely normal.")
+elif poisson_test.pvalue > 0.05:
+    print("Distribution is likely Poisson.")
+elif geometric_test.pvalue > 0.05:
+    print("Distribution is likely geometric.")
+elif binomial_test.pvalue > 0.05:
+    print("Distribution is likely binomial.")
+elif negative_binomial_test.pvalue > 0.05:
+    print("Distribution is likely negative binomial.")
+elif weibull_test.pvalue > 0.05:
+    print("Distribution is likely Weibull.")
+elif gamma_test.pvalue > 0.05:
+    print("Distribution is likely gamma.")
+elif lognormal_test.pvalue > 0.05:
+    print("Distribution is likely lognormal.")
+else:
+    print("Distribution is likely non-normal.")
+
+
+# Chatp 
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
+from statsmodels.graphics.gofplots import qqplot
+
+def analyze_distributions(df, column):
+    """
+    Analyze the distribution of a given column in a Pandas DataFrame by comparing it with multiple 
+    theoretical distributions (normal, uniform, exponential, log-normal, gamma).
+    
+    Parameters:
+    - df: Pandas DataFrame
+    - column: Column name (str) to analyze
+    
+    Returns:
+    - Dictionary of statistical test results.
+    """
+    data = df[column].dropna()
+    
+    print(f"\nAnalyzing distribution for column: {column}")
+    
+    # 1. Plot the Histogram and KDE
+    plt.figure(figsize=(14, 8))
+    sns.histplot(data, kde=True, bins=30)
+    plt.title(f"Histogram and KDE of {column}")
+    plt.show()
+
+    distributions = {
+        'Normal': stats.norm,
+        'Uniform': stats.uniform,
+        'Exponential': stats.expon,
+        'Log-Normal': stats.lognorm,
+        'Gamma': stats.gamma
+    }
+    
+    # 2. Perform Kolmogorov-Smirnov test for each distribution
+    test_results = {}
+    
+    for dist_name, dist in distributions.items():
+        # Fit the distribution parameters to the data
+        if dist_name == 'Log-Normal':
+            shape, loc, scale = dist.fit(data)
+            dist_params = (shape, loc, scale)
+        else:
+            dist_params = dist.fit(data)
+        
+        # Perform K-S test to compare the data with the fitted distribution
+        ks_stat, p_value = stats.kstest(data, dist_name.lower(), args=dist_params)
+        
+        # Q-Q Plot for visual check
+        plt.figure(figsize=(6, 6))
+        if dist_name == 'Log-Normal':
+            qqplot(data, line='s', dist=dist, distargs=(shape, loc, scale))
+        else:
+            qqplot(data, line='s', dist=dist)
+        plt.title(f"Q-Q Plot for {dist_name} Distribution")
+        plt.show()
+        
+        # Store results
+        test_results[dist_name] = {'K-S Statistic': ks_stat, 'p-value': p_value}
+        print(f"{dist_name} Distribution: KS Statistic = {ks_stat:.4f}, p-value = {p_value:.4f}")
+        
+        if p_value > 0.05:
+            print(f"The data may follow a {dist_name} distribution (fail to reject H0).")
+        else:
+            print(f"The data does not follow a {dist_name} distribution (reject H0).")
+    
+    return test_results
+
+# Example Usage
+# Generate sample data
+np.random.seed(42)
+data = pd.DataFrame({
+    'normal_dist': np.random.normal(0, 1, 1000),
+    'uniform_dist': np.random.uniform(0, 1, 1000),
+    'exponential_dist': np.random.exponential(scale=1, size=1000),
+    'lognormal_dist': np.random.lognormal(mean=0, sigma=1, size=1000),
+    'gamma_dist': np.random.gamma(shape=2, scale=1, size=1000)
+})
+
+# Analyze the distribution for a specific column (e.g., normal_dist)
+result = analyze_distributions(data, 'normal_dist')
